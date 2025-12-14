@@ -34,7 +34,7 @@ jobs:
     - name: Upload patched image files
       uses: actions/upload-artifact@v4
       with:
-        path: /home/runner/work/fastboot-patcher/fastboot-patcher/output/*.*
+        path: output/*
         name: Patched Recovery Image Bundle
         if-no-files-found: error
         retention-days: 15
@@ -44,7 +44,7 @@ jobs:
     - name: Upload keys for patched image
       uses: actions/upload-artifact@v4
       with:
-        path: /home/runner/work/fastboot-patcher/fastboot-patcher/keys/*.*
+        path: keys/*
         name: Patched Image Key Bundle
         if-no-files-found: error
         retention-days: 15
