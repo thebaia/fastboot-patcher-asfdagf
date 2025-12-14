@@ -12,24 +12,40 @@ on:
 jobs:
   process:
     runs-on: ubuntu-latest
-    
-    steps:
-    - name: Gain file access
-      uses: actions/checkout@v4.1.1
-    
-    - name: Fetch necessary packages
-      run: |
-         sudo apt install git wget lz4 tar openssl python3 -y
-         
-    - name: Download recovery image from URL
-      run: |
-         wget ${{github.event.inputs.image_url}}
 
-    - name: Start patching script
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4.1.1
+
+    - name: Install necessary packages
       run: |
-         chmod a+x magiskboot
-         chmod a+x patcher-minimal
+         sudo apt update
+         sudo apt install -y git wget lz4 tar openssl python3
+
+    - name: Download recovery image
+      run: |
+         wget -O recovery.img ${{ github.event.inputs.image_url }}
+         file recovery.img
+
+    - name: Unpack LZ4 if needed
+      run: |
+         if file recovery.img | grep -qi lz4; then
+           echo "Detected LZ4 compressed image, unpacking..."
+           mv recovery.img recovery.img.lz4
+           lz4 -d recovery.img.lz4 recovery.img
+         fi
+
+    - name: Patch recovery
+      run: |
+         chmod +x magiskboot patcher-minimal
          ./patcher-minimal
+
+    - name: Generate Odin flashable .tar.md5
+      run: |
+         cd output
+         tar cvf output.tar output.img
+         md5sum output.tar > output.tar.md5
+         ls -lh
 
     - name: Upload patched image files
       uses: actions/upload-artifact@v4
@@ -40,7 +56,7 @@ jobs:
         retention-days: 15
         compression-level: 0
         overwrite: true
-        
+
     - name: Upload keys for patched image
       uses: actions/upload-artifact@v4
       with:
@@ -50,3 +66,4 @@ jobs:
         retention-days: 15
         compression-level: 0
         overwrite: true
+
